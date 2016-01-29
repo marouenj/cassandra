@@ -49,7 +49,9 @@ public enum ConsistencyLevel
     EACH_QUORUM (7),
     SERIAL      (8),
     LOCAL_SERIAL(9),
-    LOCAL_ONE   (10, true);
+    LOCAL_ONE   (10, true),
+    QUORUM_CALLBACK(104),
+    ALL_CALLBACK   (105);
 
     private static final Logger logger = LoggerFactory.getLogger(ConsistencyLevel.class);
 
@@ -115,9 +117,11 @@ public enum ConsistencyLevel
             case THREE:
                 return 3;
             case QUORUM:
+            case QUORUM_CALLBACK:
             case SERIAL:
                 return quorumFor(keyspace);
             case ALL:
+            case ALL_CALLBACK:
                 return keyspace.getReplicationStrategy().getReplicationFactor();
             case LOCAL_QUORUM:
             case LOCAL_SERIAL:
