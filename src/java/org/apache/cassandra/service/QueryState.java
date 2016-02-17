@@ -21,6 +21,7 @@ import java.net.InetAddress;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.apache.cassandra.tracing.Tracing;
 
 /**
@@ -30,6 +31,8 @@ public class QueryState
 {
     private final ClientState clientState;
     private volatile UUID preparedTracingSession;
+
+    private ChannelHandlerContext ctx;
 
     public QueryState(ClientState clientState)
     {
@@ -93,5 +96,13 @@ public class QueryState
         return clientState.isInternal
              ? null
              : clientState.getRemoteAddress().getAddress();
+    }
+
+    public ChannelHandlerContext getCtx() {
+        return this.ctx;
+    }
+
+    public void setCtx(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
     }
 }
