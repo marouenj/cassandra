@@ -17,6 +17,7 @@
  */
 package org.apache.cassandra.service.pager;
 
+import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.utils.AbstractIterator;
 
 import org.apache.cassandra.db.*;
@@ -25,7 +26,6 @@ import org.apache.cassandra.db.filter.DataLimits;
 import org.apache.cassandra.db.partitions.*;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.exceptions.RequestExecutionException;
-import org.apache.cassandra.service.ClientState;
 
 /**
  * Pager over a list of ReadCommand.
@@ -119,10 +119,10 @@ public class MultiPartitionPager implements QueryPager
     }
 
     @SuppressWarnings("resource") // iter closed via countingIter
-    public PartitionIterator fetchPage(int pageSize, ConsistencyLevel consistency, ClientState clientState) throws RequestValidationException, RequestExecutionException
+    public PartitionIterator fetchPage(int pageSize, ConsistencyLevel consistency, QueryState queryState) throws RequestValidationException, RequestExecutionException
     {
         int toQuery = Math.min(remaining, pageSize);
-        PagersIterator iter = new PagersIterator(toQuery, consistency, clientState, null);
+        PagersIterator iter = new PagersIterator(toQuery, consistency, queryState, null);
         DataLimits.Counter counter = limit.forPaging(toQuery).newCounter(nowInSec, true);
         iter.setCounter(counter);
         return counter.applyTo(iter);
@@ -146,16 +146,16 @@ public class MultiPartitionPager implements QueryPager
 
         // For "normal" queries
         private final ConsistencyLevel consistency;
-        private final ClientState clientState;
+        private final QueryState queryState;
 
         // For internal queries
         private final ReadOrderGroup orderGroup;
 
-        public PagersIterator(int pageSize, ConsistencyLevel consistency, ClientState clientState, ReadOrderGroup orderGroup)
+        public PagersIterator(int pageSize, ConsistencyLevel consistency, QueryState queryState, ReadOrderGroup orderGroup)
         {
             this.pageSize = pageSize;
             this.consistency = consistency;
-            this.clientState = clientState;
+            this.queryState = queryState;
             this.orderGroup = orderGroup;
         }
 
@@ -178,7 +178,7 @@ public class MultiPartitionPager implements QueryPager
                 int toQuery = pageSize - counter.counted();
                 result = consistency == null
                        ? pagers[current].fetchPageInternal(toQuery, orderGroup)
-                       : pagers[current].fetchPage(toQuery, consistency, clientState);
+                       : pagers[current].fetchPage(toQuery, consistency, queryState);
             }
             return result.next();
         }

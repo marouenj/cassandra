@@ -85,7 +85,7 @@ public class CassandraServer implements Cassandra.Iface
         return ThriftSessionManager.instance.currentSession();
     }
 
-    protected PartitionIterator read(List<SinglePartitionReadCommand> commands, org.apache.cassandra.db.ConsistencyLevel consistency_level, ClientState cState)
+    protected PartitionIterator read(List<SinglePartitionReadCommand> commands, org.apache.cassandra.db.ConsistencyLevel consistency_level, QueryState queryState)
     throws org.apache.cassandra.exceptions.InvalidRequestException, UnavailableException, TimedOutException
     {
         try
@@ -93,7 +93,7 @@ public class CassandraServer implements Cassandra.Iface
             schedule(DatabaseDescriptor.getReadRpcTimeout());
             try
             {
-                return StorageProxy.read(new SinglePartitionReadCommand.Group(commands, DataLimits.NONE), consistency_level, cState);
+                return StorageProxy.read(new SinglePartitionReadCommand.Group(commands, DataLimits.NONE), consistency_level, queryState);
             }
             finally
             {
@@ -257,10 +257,10 @@ public class CassandraServer implements Cassandra.Iface
              : result;
     }
 
-    private Map<ByteBuffer, List<ColumnOrSuperColumn>> getSlice(List<SinglePartitionReadCommand> commands, boolean subColumnsOnly, int cellLimit, org.apache.cassandra.db.ConsistencyLevel consistency_level, ClientState cState)
+    private Map<ByteBuffer, List<ColumnOrSuperColumn>> getSlice(List<SinglePartitionReadCommand> commands, boolean subColumnsOnly, int cellLimit, org.apache.cassandra.db.ConsistencyLevel consistency_level, QueryState queryState)
     throws org.apache.cassandra.exceptions.InvalidRequestException, UnavailableException, TimedOutException
     {
-        try (PartitionIterator results = read(commands, consistency_level, cState))
+        try (PartitionIterator results = read(commands, consistency_level, queryState))
         {
             Map<ByteBuffer, List<ColumnOrSuperColumn>> columnFamiliesMap = new HashMap<>();
             while (results.hasNext())
@@ -294,9 +294,10 @@ public class CassandraServer implements Cassandra.Iface
         try
         {
             ClientState cState = state();
+            QueryState queryState = new QueryState(cState);
             String keyspace = cState.getKeyspace();
             state().hasColumnFamilyAccess(keyspace, column_parent.column_family, Permission.SELECT);
-            List<ColumnOrSuperColumn> result = getSliceInternal(keyspace, key, column_parent, FBUtilities.nowInSeconds(), predicate, consistency_level, cState);
+            List<ColumnOrSuperColumn> result = getSliceInternal(keyspace, key, column_parent, FBUtilities.nowInSeconds(), predicate, consistency_level, queryState);
             return result == null ? Collections.<ColumnOrSuperColumn>emptyList() : result;
         }
         catch (RequestValidationException e)
@@ -315,10 +316,10 @@ public class CassandraServer implements Cassandra.Iface
                                                        int nowInSec,
                                                        SlicePredicate predicate,
                                                        ConsistencyLevel consistency_level,
-                                                       ClientState cState)
+                                                       QueryState queryState)
     throws org.apache.cassandra.exceptions.InvalidRequestException, UnavailableException, TimedOutException
     {
-        return multigetSliceInternal(keyspace, Collections.singletonList(key), column_parent, nowInSec, predicate, consistency_level, cState).get(key);
+        return multigetSliceInternal(keyspace, Collections.singletonList(key), column_parent, nowInSec, predicate, consistency_level, queryState).get(key);
     }
 
     public Map<ByteBuffer, List<ColumnOrSuperColumn>> multiget_slice(List<ByteBuffer> keys, ColumnParent column_parent, SlicePredicate predicate, ConsistencyLevel consistency_level)
@@ -343,9 +344,10 @@ public class CassandraServer implements Cassandra.Iface
         try
         {
             ClientState cState = state();
+            QueryState queryState = new QueryState(cState);
             String keyspace = cState.getKeyspace();
             cState.hasColumnFamilyAccess(keyspace, column_parent.column_family, Permission.SELECT);
-            return multigetSliceInternal(keyspace, keys, column_parent, FBUtilities.nowInSeconds(), predicate, consistency_level, cState);
+            return multigetSliceInternal(keyspace, keys, column_parent, FBUtilities.nowInSeconds(), predicate, consistency_level, queryState);
         }
         catch (RequestValidationException e)
         {
@@ -541,7 +543,7 @@ public class CassandraServer implements Cassandra.Iface
                                                                              int nowInSec,
                                                                              SlicePredicate predicate,
                                                                              ConsistencyLevel consistency_level,
-                                                                             ClientState cState)
+                                                                             QueryState queryState)
     throws org.apache.cassandra.exceptions.InvalidRequestException, UnavailableException, TimedOutException
     {
         CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, column_parent.column_family);
@@ -563,7 +565,7 @@ public class CassandraServer implements Cassandra.Iface
             commands.add(SinglePartitionReadCommand.create(true, metadata, nowInSec, columnFilter, RowFilter.NONE, limits, dk, filter));
         }
 
-        return getSlice(commands, column_parent.isSetSuper_column(), limits.perPartitionCount(), consistencyLevel, cState);
+        return getSlice(commands, column_parent.isSetSuper_column(), limits.perPartitionCount(), consistencyLevel, queryState);
     }
 
     public ColumnOrSuperColumn get(ByteBuffer key, ColumnPath column_path, ConsistencyLevel consistency_level)
@@ -584,6 +586,7 @@ public class CassandraServer implements Cassandra.Iface
         try
         {
             ThriftClientState cState = state();
+            QueryState queryState = new QueryState(cState);
             String keyspace = cState.getKeyspace();
             cState.hasColumnFamilyAccess(keyspace, column_path.column_family, Permission.SELECT);
 
@@ -643,7 +646,7 @@ public class CassandraServer implements Cassandra.Iface
             DecoratedKey dk = metadata.decorateKey(key);
             SinglePartitionReadCommand command = SinglePartitionReadCommand.create(true, metadata, FBUtilities.nowInSeconds(), columns, RowFilter.NONE, DataLimits.NONE, dk, filter);
 
-            try (RowIterator result = PartitionIterators.getOnlyElement(read(Arrays.asList(command), consistencyLevel, cState), command))
+            try (RowIterator result = PartitionIterators.getOnlyElement(read(Arrays.asList(command), consistencyLevel, queryState), command))
             {
                 if (!result.hasNext())
                     throw new NotFoundException();
@@ -688,6 +691,7 @@ public class CassandraServer implements Cassandra.Iface
         try
         {
             ThriftClientState cState = state();
+            QueryState queryState = new QueryState(cState);
             String keyspace = cState.getKeyspace();
             cState.hasColumnFamilyAccess(keyspace, column_parent.column_family, Permission.SELECT);
             Keyspace keyspaceName = Keyspace.open(keyspace);
@@ -695,7 +699,7 @@ public class CassandraServer implements Cassandra.Iface
             int nowInSec = FBUtilities.nowInSeconds();
 
             if (predicate.column_names != null)
-                return getSliceInternal(keyspace, key, column_parent, nowInSec, predicate, consistency_level, cState).size();
+                return getSliceInternal(keyspace, key, column_parent, nowInSec, predicate, consistency_level, queryState).size();
 
             int pageSize;
             // request by page if this is a large row
@@ -739,7 +743,7 @@ public class CassandraServer implements Cassandra.Iface
                                           filter,
                                           limits,
                                           ThriftConversion.fromThrift(consistency_level),
-                                          cState,
+                                          queryState,
                                           pageSize,
                                           nowInSec,
                                           true);
@@ -787,6 +791,7 @@ public class CassandraServer implements Cassandra.Iface
         try
         {
             ThriftClientState cState = state();
+            QueryState queryState = new QueryState(cState);
             String keyspace = cState.getKeyspace();
             cState.hasColumnFamilyAccess(keyspace, column_parent.column_family, Permission.SELECT);
 
@@ -797,7 +802,7 @@ public class CassandraServer implements Cassandra.Iface
                                                                                                  FBUtilities.nowInSeconds(),
                                                                                                  predicate,
                                                                                                  consistency_level,
-                                                                                                 cState);
+                                                                                                 queryState);
 
             for (Map.Entry<ByteBuffer, List<ColumnOrSuperColumn>> cf : columnFamiliesMap.entrySet())
                 counts.put(cf.getKey(), cf.getValue().size());
@@ -2405,6 +2410,7 @@ public class CassandraServer implements Cassandra.Iface
         try 
         {
             ClientState cState = state();
+            QueryState queryState = new QueryState(cState);
             String keyspace = cState.getKeyspace();
             state().hasColumnFamilyAccess(keyspace, request.getColumn_parent().column_family, Permission.SELECT);
             CFMetaData metadata = ThriftValidation.validateColumnFamily(keyspace, request.getColumn_parent().column_family);
@@ -2442,7 +2448,7 @@ public class CassandraServer implements Cassandra.Iface
                             false,
                             limits.perPartitionCount(),
                             consistencyLevel,
-                            cState).entrySet().iterator().next().getValue();
+                            queryState).entrySet().iterator().next().getValue();
         }
         catch (RequestValidationException e)
         {

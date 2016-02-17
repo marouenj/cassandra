@@ -211,7 +211,7 @@ public class SelectStatement implements CQLStatement
             return execute(query, options, state, nowInSec, userLimit);
 
         QueryPager pager = query.getPager(options.getPagingState(), options.getProtocolVersion());
-        return execute(Pager.forDistributedQuery(pager, cl, state.getClientState()), options, pageSize, nowInSec, userLimit);
+        return execute(Pager.forDistributedQuery(pager, cl, state), options, pageSize, nowInSec, userLimit);
     }
 
     private int getPageSize(QueryOptions options)
@@ -247,7 +247,7 @@ public class SelectStatement implements CQLStatement
                                        int nowInSec,
                                        int userLimit) throws RequestValidationException, RequestExecutionException
     {
-        try (PartitionIterator data = query.execute(options.getConsistency(), state.getClientState()))
+        try (PartitionIterator data = query.execute(options.getConsistency(), state))
         {
             return processResults(data, options, nowInSec, userLimit);
         }
@@ -268,9 +268,9 @@ public class SelectStatement implements CQLStatement
             return new InternalPager(pager, orderGroup);
         }
 
-        public static Pager forDistributedQuery(QueryPager pager, ConsistencyLevel consistency, ClientState clientState)
+        public static Pager forDistributedQuery(QueryPager pager, ConsistencyLevel consistency, QueryState queryState)
         {
-            return new NormalPager(pager, consistency, clientState);
+            return new NormalPager(pager, consistency, queryState);
         }
 
         public boolean isExhausted()
@@ -288,18 +288,18 @@ public class SelectStatement implements CQLStatement
         public static class NormalPager extends Pager
         {
             private final ConsistencyLevel consistency;
-            private final ClientState clientState;
+            private final QueryState queryState;
 
-            private NormalPager(QueryPager pager, ConsistencyLevel consistency, ClientState clientState)
+            private NormalPager(QueryPager pager, ConsistencyLevel consistency, QueryState queryState)
             {
                 super(pager);
                 this.consistency = consistency;
-                this.clientState = clientState;
+                this.queryState = queryState;
             }
 
             public PartitionIterator fetchPage(int pageSize)
             {
-                return pager.fetchPage(pageSize, consistency, clientState);
+                return pager.fetchPage(pageSize, consistency, queryState);
             }
         }
 

@@ -24,6 +24,7 @@ import org.apache.cassandra.db.partitions.*;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.service.ClientState;
+import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.Server;
 
 /**
@@ -42,7 +43,7 @@ public class QueryPagers
                                  ClusteringIndexFilter filter,
                                  DataLimits limits,
                                  ConsistencyLevel consistencyLevel,
-                                 ClientState state,
+                                 QueryState state,
                                  final int pageSize,
                                  int nowInSec,
                                  boolean isForThrift) throws RequestValidationException, RequestExecutionException
