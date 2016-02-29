@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,6 +131,28 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
         throw failed
             ? new ReadFailureException(consistencyLevel, received, failures, blockfor, resolver.isDataPresent())
             : new ReadTimeoutException(consistencyLevel, received, blockfor, resolver.isDataPresent());
+    }
+
+    /**
+     * {@link ReadCallback#get()} does two actions: wait, then get the results
+     * These two operations are split in this method and {@link ReadCallback#getAfterAwait()}
+     */
+    public PartitionIterator await() throws ReadFailureException, ReadTimeoutException
+    {
+        awaitResults();
+        return null; // implementation missing for now
+    }
+
+    /**
+     * {@link ReadCallback#get()} does two actions: wait, then get the results
+     * These two operations are split in {@link ReadCallback#await()} and this method
+     */
+    public PartitionIterator getAfterAwait() throws DigestMismatchException
+    {
+        PartitionIterator result = blockfor == 1 ? resolver.getData() : resolver.resolve();
+        if (logger.isTraceEnabled())
+            logger.trace("Read: {} ms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+        return result;
     }
 
     public PartitionIterator get() throws ReadFailureException, ReadTimeoutException, DigestMismatchException
