@@ -32,6 +32,7 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1507,7 +1508,7 @@ public class StorageProxy implements StorageProxyMBean
 
         return consistencyLevel.isSerialConsistency()
              ? readWithPaxos(group, consistencyLevel, state.getClientState())
-             : readRegular(group, consistencyLevel);
+             : readRegular(group, consistencyLevel, state.getCtx());
     }
 
     private static PartitionIterator readWithPaxos(SinglePartitionReadCommand.Group group, ConsistencyLevel consistencyLevel, ClientState state)
@@ -1582,7 +1583,7 @@ public class StorageProxy implements StorageProxyMBean
     }
 
     @SuppressWarnings("resource")
-    private static PartitionIterator readRegular(SinglePartitionReadCommand.Group group, ConsistencyLevel consistencyLevel)
+    private static PartitionIterator readRegular(SinglePartitionReadCommand.Group group, ConsistencyLevel consistencyLevel, ChannelHandlerContext ctx)
     throws UnavailableException, ReadFailureException, ReadTimeoutException
     {
         long start = System.nanoTime();
