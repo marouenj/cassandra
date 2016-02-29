@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Iterables;
+import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,6 +136,24 @@ public abstract class AbstractReadExecutor
      * send the initial set of requests
      */
     public abstract void executeAsync();
+
+    /**
+     * {@link AbstractReadExecutor#get()} does two actions: wait, then get the results
+     * These two operations are split in this method and {@link AbstractReadExecutor#getAfterAwait()}
+     */
+    public PartitionIterator await() throws ReadFailureException, ReadTimeoutException
+    {
+        return handler.await();
+    }
+
+    /**
+     * {@link AbstractReadExecutor#get()} does two actions: wait, then get the results
+     * These two operations are split in {@link AbstractReadExecutor#await()} and this method
+     */
+    public PartitionIterator getAfterAwait() throws DigestMismatchException
+    {
+        return handler.getAfterAwait();
+    }
 
     /**
      * wait for an answer.  Blocks until success or timeout, so it is caller's
