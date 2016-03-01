@@ -1589,7 +1589,11 @@ public class StorageProxy implements StorageProxyMBean
         long start = System.nanoTime();
         try
         {
-            PartitionIterator result = fetchRows(group.commands, consistencyLevel);
+            PartitionIterator result;
+            if (consistencyLevel != ConsistencyLevel.ALL_CALLBACK && consistencyLevel != ConsistencyLevel.QUORUM_CALLBACK)
+                result = fetchRows(group.commands, consistencyLevel);
+            else
+                result = fetchRowsWithCallback(group.commands, consistencyLevel, ctx);
             // If we have more than one command, then despite each read command honoring the limit, the total result
             // might not honor it and so we should enforce it
             if (group.commands.size() > 1)
@@ -1664,6 +1668,41 @@ public class StorageProxy implements StorageProxyMBean
         return PartitionIterators.concat(results);
     }
 
+    private static PartitionIterator fetchRowsWithCallback(List<SinglePartitionReadCommand> commands, ConsistencyLevel consistencyLevel, ChannelHandlerContext ctx)
+            throws UnavailableException, ReadFailureException, ReadTimeoutException
+    {
+        int cmdCount = commands.size();
+
+        SinglePartitionReadLifecycle[] reads = new SinglePartitionReadLifecycle[cmdCount];
+        for (int i = 0; i < cmdCount; i++)
+            reads[i] = new SinglePartitionReadLifecycle(commands.get(i), consistencyLevel);
+
+        for (int i = 0; i < cmdCount; i++)
+            reads[i].doInitialQueries();
+
+        for (int i = 0; i < cmdCount; i++)
+            reads[i].maybeTryAdditionalReplicas();
+
+        for (int i = 0; i < cmdCount; i++)
+            reads[i].awaitResults();
+
+        for (int i = 0; i < cmdCount; i++)
+            reads[i].retryOnDigestMismatch();
+
+        for (int i = 0; i < cmdCount; i++)
+            if (!reads[i].isDone())
+                reads[i].maybeAwaitFullDataRead();
+
+        List<PartitionIterator> results = new ArrayList<>(cmdCount);
+        for (int i = 0; i < cmdCount; i++)
+        {
+            assert reads[i].isDone();
+            results.add(reads[i].getResult());
+        }
+
+        return PartitionIterators.concat(results);
+    }
+
     private static class SinglePartitionReadLifecycle
     {
         private final SinglePartitionReadCommand command;
@@ -1716,6 +1755,42 @@ public class StorageProxy implements StorageProxyMBean
                                                  command,
                                                  keyspace,
                                                  executor.handler.endpoints);
+
+                for (InetAddress endpoint : executor.getContactedReplicas())
+                {
+                    MessageOut<ReadCommand> message = command.createMessage(MessagingService.instance().getVersion(endpoint));
+                    Tracing.trace("Enqueuing full data read to {}", endpoint);
+                    MessagingService.instance().sendRRWithFailure(message, endpoint, repairHandler);
+                }
+            }
+        }
+
+        void awaitResults() throws ReadFailureException, ReadTimeoutException
+        {
+            result = executor.await();
+        }
+
+        void retryOnDigestMismatch()
+        {
+            try
+            {
+                executor.getAfterAwait();
+            }
+            catch (DigestMismatchException ex)
+            {
+                Tracing.trace("Digest mismatch: {}", ex);
+
+                ReadRepairMetrics.repairedBlocking.mark();
+
+                // Do a full data read to resolve the correct response (and repair node that need be)
+                Keyspace keyspace = Keyspace.open(command.metadata().ksName);
+                DataResolver resolver = new DataResolver(keyspace, command, ConsistencyLevel.ALL, executor.handler.endpoints.size());
+                repairHandler = new ReadCallback(resolver,
+                        ConsistencyLevel.ALL,
+                        executor.getContactedReplicas().size(),
+                        command,
+                        keyspace,
+                        executor.handler.endpoints);
 
                 for (InetAddress endpoint : executor.getContactedReplicas())
                 {
