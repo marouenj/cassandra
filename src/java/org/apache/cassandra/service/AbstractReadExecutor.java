@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Iterables;
-import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,7 +138,7 @@ public abstract class AbstractReadExecutor
 
     /**
      * {@link AbstractReadExecutor#get()} does two actions: wait, then get the results
-     * These two operations are split in this method and {@link AbstractReadExecutor#getAfterAwait()}
+     * These two operations are split in this method and {@link AbstractReadExecutor#compareDigests()}
      */
     public PartitionIterator awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
     {
@@ -150,9 +149,9 @@ public abstract class AbstractReadExecutor
      * {@link AbstractReadExecutor#get()} does two actions: wait, then get the results
      * These two operations are split in {@link AbstractReadExecutor#awaitAndReturnData()} and this method
      */
-    public PartitionIterator getAfterAwait() throws DigestMismatchException
+    public PartitionIterator compareDigests() throws DigestMismatchException
     {
-        return handler.getAfterAwait();
+        return handler.compareDigests();
     }
 
     /**

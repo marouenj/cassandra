@@ -1774,7 +1774,7 @@ public class StorageProxy implements StorageProxyMBean
         {
             try
             {
-                executor.getAfterAwait();
+                executor.compareDigests();
             }
             catch (DigestMismatchException ex)
             {

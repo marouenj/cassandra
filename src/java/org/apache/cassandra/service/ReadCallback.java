@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +134,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 
     /**
      * {@link ReadCallback#get()} does two actions: wait, then get the results
-     * These two operations are split in this method and {@link ReadCallback#getAfterAwait()}
+     * These two operations are split in this method and {@link ReadCallback#compareDigests()}
      */
     public PartitionIterator awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
     {
@@ -147,7 +146,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
      * {@link ReadCallback#get()} does two actions: wait, then get the results
      * These two operations are split in {@link ReadCallback#awaitAndReturnData()} and this method
      */
-    public PartitionIterator getAfterAwait() throws DigestMismatchException
+    public PartitionIterator compareDigests() throws DigestMismatchException
     {
         PartitionIterator result = blockfor == 1 ? resolver.getData() : resolver.resolve();
         if (logger.isTraceEnabled())
