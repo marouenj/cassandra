@@ -1684,7 +1684,7 @@ public class StorageProxy implements StorageProxyMBean
             reads[i].maybeTryAdditionalReplicas();
 
         for (int i = 0; i < cmdCount; i++)
-            reads[i].awaitResults();
+            reads[i].awaitAndReturnData();
 
         for (int i = 0; i < cmdCount; i++)
             reads[i].retryOnDigestMismatch();
@@ -1765,7 +1765,7 @@ public class StorageProxy implements StorageProxyMBean
             }
         }
 
-        void awaitResults() throws ReadFailureException, ReadTimeoutException
+        void awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
         {
             result = executor.await();
         }
