@@ -141,14 +141,14 @@ public abstract class AbstractReadExecutor
      * {@link AbstractReadExecutor#get()} does two actions: wait, then get the results
      * These two operations are split in this method and {@link AbstractReadExecutor#getAfterAwait()}
      */
-    public PartitionIterator await() throws ReadFailureException, ReadTimeoutException
+    public PartitionIterator awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
     {
         return handler.await();
     }
 
     /**
      * {@link AbstractReadExecutor#get()} does two actions: wait, then get the results
-     * These two operations are split in {@link AbstractReadExecutor#await()} and this method
+     * These two operations are split in {@link AbstractReadExecutor#awaitAndReturnData()} and this method
      */
     public PartitionIterator getAfterAwait() throws DigestMismatchException
     {

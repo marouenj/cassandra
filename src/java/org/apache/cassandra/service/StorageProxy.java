@@ -1767,7 +1767,7 @@ public class StorageProxy implements StorageProxyMBean
 
         void awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
         {
-            result = executor.await();
+            result = executor.awaitAndReturnData();
         }
 
         void retryOnDigestMismatch()
