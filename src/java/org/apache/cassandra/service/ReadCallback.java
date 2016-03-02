@@ -140,7 +140,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
     public PartitionIterator awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
     {
         awaitResults();
-        return null; // implementation missing for now
+        return resolver.getData();
     }
 
     /**
