@@ -1772,6 +1772,11 @@ public class StorageProxy implements StorageProxyMBean
 
         void retryOnDigestMismatch()
         {
+            if (executor.handler.blockfor == 1) {
+                // TODO follow up with an ack
+                return;
+            }
+
             try
             {
                 executor.compareDigests();
@@ -1799,6 +1804,9 @@ public class StorageProxy implements StorageProxyMBean
                     MessagingService.instance().sendRRWithFailure(message, endpoint, repairHandler);
                 }
             }
+
+            // if we reach this point, we know that no mismatch occurred
+            // TODO follow up with an ack
         }
 
         void maybeAwaitFullDataRead() throws ReadTimeoutException

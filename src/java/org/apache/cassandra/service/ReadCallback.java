@@ -148,7 +148,8 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
      */
     public PartitionIterator compareDigests() throws DigestMismatchException
     {
-        PartitionIterator result = blockfor == 1 ? resolver.getData() : resolver.resolve();
+        assert blockfor != 1;
+        PartitionIterator result = resolver.resolve();
         if (logger.isTraceEnabled())
             logger.trace("Read: {} ms.", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
         return result;
