@@ -143,7 +143,7 @@ public abstract class AbstractReadExecutor
      */
     public PartitionIterator awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
     {
-        return handler.await();
+        return handler.awaitAndReturnData();
     }
 
     /**

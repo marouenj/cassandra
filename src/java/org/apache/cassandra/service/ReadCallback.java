@@ -137,7 +137,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
      * {@link ReadCallback#get()} does two actions: wait, then get the results
      * These two operations are split in this method and {@link ReadCallback#getAfterAwait()}
      */
-    public PartitionIterator await() throws ReadFailureException, ReadTimeoutException
+    public PartitionIterator awaitAndReturnData() throws ReadFailureException, ReadTimeoutException
     {
         awaitResults();
         return null; // implementation missing for now
@@ -145,7 +145,7 @@ public class ReadCallback implements IAsyncCallbackWithFailure<ReadResponse>
 
     /**
      * {@link ReadCallback#get()} does two actions: wait, then get the results
-     * These two operations are split in {@link ReadCallback#await()} and this method
+     * These two operations are split in {@link ReadCallback#awaitAndReturnData()} and this method
      */
     public PartitionIterator getAfterAwait() throws DigestMismatchException
     {
