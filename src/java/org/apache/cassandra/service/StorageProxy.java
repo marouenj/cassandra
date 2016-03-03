@@ -1690,9 +1690,11 @@ public class StorageProxy implements StorageProxyMBean
         ctx.executor().execute(() -> {
             for (int i = 0; i < cmdCount; i++)
                 reads[i].retryOnDigestMismatch();
+
             for (int i = 0; i < cmdCount; i++)
                 if (!reads[i].isDone())
                     reads[i].maybeAwaitFullDataRead();
+
             List<PartitionIterator> results = new ArrayList<>(cmdCount);
             for (int i = 0; i < cmdCount; i++)
             {
