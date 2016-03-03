@@ -1686,13 +1686,22 @@ public class StorageProxy implements StorageProxyMBean
         for (int i = 0; i < cmdCount; i++)
             reads[i].awaitAndReturnData();
 
-        for (int i = 0; i < cmdCount; i++)
-            reads[i].retryOnDigestMismatch();
+        // submit 'the digest check and the subsequent response sending' as a task
+        ctx.executor().execute(() -> {
+            for (int i = 0; i < cmdCount; i++)
+                reads[i].retryOnDigestMismatch();
+            for (int i = 0; i < cmdCount; i++)
+                if (!reads[i].isDone())
+                    reads[i].maybeAwaitFullDataRead();
+            List<PartitionIterator> results = new ArrayList<>(cmdCount);
+            for (int i = 0; i < cmdCount; i++)
+            {
+                assert reads[i].isDone();
+                results.add(reads[i].getResult());
+            }
+        });
 
-        for (int i = 0; i < cmdCount; i++)
-            if (!reads[i].isDone())
-                reads[i].maybeAwaitFullDataRead();
-
+        // immediately return the data in hand
         List<PartitionIterator> results = new ArrayList<>(cmdCount);
         for (int i = 0; i < cmdCount; i++)
         {
