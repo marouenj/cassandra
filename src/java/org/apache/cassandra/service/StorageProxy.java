@@ -1782,7 +1782,8 @@ public class StorageProxy implements StorageProxyMBean
         void retryOnDigestMismatch()
         {
             if (executor.handler.blockfor == 1) {
-                // TODO follow up with an ack
+                // implement the ack as an empty partition iterator
+                result = EmptyIterators.partition();
                 return;
             }
 
@@ -1815,7 +1816,8 @@ public class StorageProxy implements StorageProxyMBean
             }
 
             // if we reach this point, we know that no mismatch occurred
-            // TODO follow up with an ack
+            // implement the ack as an empty partition iterator
+            result = EmptyIterators.partition();
         }
 
         void maybeAwaitFullDataRead() throws ReadTimeoutException
