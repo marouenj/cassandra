@@ -401,12 +401,12 @@ public abstract class Message
     @ChannelHandler.Sharable
     public static class Dispatcher extends SimpleChannelInboundHandler<Request>
     {
-        private static class FlushItem
+        public static class FlushItem
         {
             final ChannelHandlerContext ctx;
             final Object response;
             final Frame sourceFrame;
-            private FlushItem(ChannelHandlerContext ctx, Object response, Frame sourceFrame)
+            public FlushItem(ChannelHandlerContext ctx, Object response, Frame sourceFrame)
             {
                 this.ctx = ctx;
                 this.sourceFrame = sourceFrame;
@@ -532,7 +532,7 @@ public abstract class Message
             flush(new FlushItem(ctx, response, request.getSourceFrame()));
         }
 
-        private void flush(FlushItem item)
+        public void flush(FlushItem item)
         {
             EventLoop loop = item.ctx.channel().eventLoop();
             Flusher flusher = flusherLookup.get(loop);
