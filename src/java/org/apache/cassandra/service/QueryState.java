@@ -110,6 +110,7 @@ public class QueryState
 
     public static class PiggyBack {
 
+        private Message.Dispatcher dispatcher;
         private ChannelHandlerContext ctx;
         private int streamId;
         private ServerConnection connection;
@@ -122,6 +123,14 @@ public class QueryState
         private int userLimit;
         private AbstractQueryPager.Pager transformationPager;
         private SinglePartitionReadCommand.Group group;
+
+        public Message.Dispatcher getDispatcher() {
+            return dispatcher;
+        }
+
+        public void setDispatcher(Message.Dispatcher dispatcher) {
+            this.dispatcher = dispatcher;
+        }
 
         public ChannelHandlerContext getCtx() {
             return this.ctx;

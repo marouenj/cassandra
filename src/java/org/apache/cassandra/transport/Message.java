@@ -503,6 +503,7 @@ public abstract class Message
 
                 QueryState qstate = connection.validateNewMessage(request.type, connection.getVersion(), request.getStreamId());
 
+                qstate.getMetadataForConsistencyWithCallback().setDispatcher(this);
                 qstate.getMetadataForConsistencyWithCallback().setCtx(ctx);
                 qstate.getMetadataForConsistencyWithCallback().setStreamId(request.getStreamId());
                 qstate.getMetadataForConsistencyWithCallback().setConnection(connection);
