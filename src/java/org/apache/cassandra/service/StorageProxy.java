@@ -1739,6 +1739,15 @@ public class StorageProxy implements StorageProxyMBean
             if (msg == null) {
                 response = new ResultMessage.Void();
             }
+
+            //
+            UUID tracingId = state.getMetadataForConsistencyWithCallback().getTracingId();
+
+            if (queryOptions.skipMetadata() && response instanceof ResultMessage.Rows)
+                ((ResultMessage.Rows)response).result.metadata.setSkipMetadata();
+
+            if (tracingId != null)
+                response.setTracingId(tracingId);
         });
 
         // immediately return the data in hand

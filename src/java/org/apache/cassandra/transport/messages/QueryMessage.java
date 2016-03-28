@@ -113,6 +113,7 @@ public class QueryMessage extends Message.Request
             }
 
             state.getMetadataForConsistencyWithCallback().setQueryOptions(options);
+            state.getMetadataForConsistencyWithCallback().setTracingId(tracingId);
 
             Message.Response response = ClientState.getCQLQueryHandler().process(query, state, options, getCustomPayload());
             if (options.skipMetadata() && response instanceof ResultMessage.Rows)
