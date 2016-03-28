@@ -254,7 +254,7 @@ public class SelectStatement implements CQLStatement
     }
 
     // Simple wrapper class to avoid some code duplication
-    private static abstract class Pager
+    public static abstract class Pager
     {
         protected QueryPager pager;
 
@@ -389,7 +389,7 @@ public class SelectStatement implements CQLStatement
         return new ResultMessage.Rows(result.build(options.getProtocolVersion()));
     }
 
-    private ResultMessage.Rows processResults(PartitionIterator partitions,
+    public ResultMessage.Rows processResults(PartitionIterator partitions,
                                               QueryOptions options,
                                               int nowInSec,
                                               int userLimit) throws RequestValidationException
