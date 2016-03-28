@@ -32,7 +32,6 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.Uninterruptibles;
-import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1508,7 +1507,7 @@ public class StorageProxy implements StorageProxyMBean
 
         return consistencyLevel.isSerialConsistency()
              ? readWithPaxos(group, consistencyLevel, state.getClientState())
-             : readRegular(group, consistencyLevel, state.getCtx());
+             : readRegular(group, consistencyLevel, state);
     }
 
     private static PartitionIterator readWithPaxos(SinglePartitionReadCommand.Group group, ConsistencyLevel consistencyLevel, ClientState state)
@@ -1583,7 +1582,7 @@ public class StorageProxy implements StorageProxyMBean
     }
 
     @SuppressWarnings("resource")
-    private static PartitionIterator readRegular(SinglePartitionReadCommand.Group group, ConsistencyLevel consistencyLevel, ChannelHandlerContext ctx)
+    private static PartitionIterator readRegular(SinglePartitionReadCommand.Group group, ConsistencyLevel consistencyLevel, QueryState state)
     throws UnavailableException, ReadFailureException, ReadTimeoutException
     {
         long start = System.nanoTime();
@@ -1592,8 +1591,9 @@ public class StorageProxy implements StorageProxyMBean
             PartitionIterator result;
             if (consistencyLevel != ConsistencyLevel.ALL_CALLBACK && consistencyLevel != ConsistencyLevel.QUORUM_CALLBACK)
                 result = fetchRows(group.commands, consistencyLevel);
-            else
-                result = fetchRowsWithCallback(group.commands, consistencyLevel, ctx);
+            else {
+                result = fetchRowsWithCallback(group.commands, consistencyLevel, state);
+            }
             // If we have more than one command, then despite each read command honoring the limit, the total result
             // might not honor it and so we should enforce it
             if (group.commands.size() > 1)
@@ -1668,7 +1668,7 @@ public class StorageProxy implements StorageProxyMBean
         return PartitionIterators.concat(results);
     }
 
-    private static PartitionIterator fetchRowsWithCallback(List<SinglePartitionReadCommand> commands, ConsistencyLevel consistencyLevel, ChannelHandlerContext ctx)
+    private static PartitionIterator fetchRowsWithCallback(List<SinglePartitionReadCommand> commands, ConsistencyLevel consistencyLevel, QueryState state)
             throws UnavailableException, ReadFailureException, ReadTimeoutException
     {
         int cmdCount = commands.size();
@@ -1687,7 +1687,7 @@ public class StorageProxy implements StorageProxyMBean
             reads[i].awaitAndReturnData();
 
         // submit 'the digest check and the subsequent response sending' as a task
-        ctx.executor().execute(() -> {
+        state.getMetadataForConsistencyWithCallback().getCtx().executor().execute(() -> {
             for (int i = 0; i < cmdCount; i++)
                 reads[i].retryOnDigestMismatch();
 
