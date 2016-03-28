@@ -502,7 +502,11 @@ public abstract class Message
                     ClientWarn.instance.captureWarnings();
 
                 QueryState qstate = connection.validateNewMessage(request.type, connection.getVersion(), request.getStreamId());
-                qstate.setCtx(ctx);
+
+                qstate.getMetadataForConsistencyWithCallback().setCtx(ctx);
+                qstate.getMetadataForConsistencyWithCallback().setStreamId(request.getStreamId());
+                qstate.getMetadataForConsistencyWithCallback().setConnection(connection);
+                qstate.getMetadataForConsistencyWithCallback().setType(request.type);
 
                 logger.trace("Received: {}, v={}", request, connection.getVersion());
                 response = request.execute(qstate);

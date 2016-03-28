@@ -36,6 +36,8 @@ import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.db.transform.Transformation;
 import org.apache.cassandra.service.pager.AbstractQueryPager;
+import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.ServerConnection;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -1748,6 +1750,15 @@ public class StorageProxy implements StorageProxyMBean
 
             if (tracingId != null)
                 response.setTracingId(tracingId);
+
+            //
+            ServerConnection connection = state.getMetadataForConsistencyWithCallback().getConnection();
+            Message.Type type = state.getMetadataForConsistencyWithCallback().getType();
+
+            response.setStreamId(state.getMetadataForConsistencyWithCallback().getStreamId());
+            response.setWarnings(ClientWarn.instance.getWarnings()); // global
+            response.attach(connection);
+            connection.applyStateTransition(type, response.type); // add callback state
         });
 
         // immediately return the data in hand
