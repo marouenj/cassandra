@@ -1733,6 +1733,12 @@ public class StorageProxy implements StorageProxyMBean
             SelectStatement.Pager pager = state.getMetadataForConsistencyWithCallback().getPager();
             if (pager != null && !pager.isExhausted()) // add condition on nullity
                 msg.result.metadata.setHasMorePages(pager.state());
+
+            //
+            ResultMessage response = msg;
+            if (msg == null) {
+                response = new ResultMessage.Void();
+            }
         });
 
         // immediately return the data in hand
