@@ -32,6 +32,7 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.netty.channel.ChannelHandlerContext;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.db.transform.Transformation;
@@ -1695,7 +1696,8 @@ public class StorageProxy implements StorageProxyMBean
             reads[i].awaitAndReturnData();
 
         // submit 'the digest check and the subsequent response sending' as a task
-        state.getMetadataForConsistencyWithCallback().getCtx().executor().execute(() -> {
+        ChannelHandlerContext ctx = state.getMetadataForConsistencyWithCallback().getCtx();
+        ctx.executor().execute(() -> {
             for (int i = 0; i < cmdCount; i++)
                 reads[i].retryOnDigestMismatch();
 
