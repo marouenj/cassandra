@@ -24,7 +24,6 @@ import org.apache.cassandra.db.filter.DataLimits;
 import org.apache.cassandra.db.transform.Transformation;
 import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
 
 abstract class AbstractQueryPager implements QueryPager
