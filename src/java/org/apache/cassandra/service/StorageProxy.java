@@ -1761,6 +1761,12 @@ public class StorageProxy implements StorageProxyMBean
             response.setWarnings(ClientWarn.instance.getWarnings()); // global
             response.attach(connection);
             connection.applyStateTransition(type, response.type); // add callback state
+
+            //
+            Message.Dispatcher dispatcher = state.getMetadataForConsistencyWithCallback().getDispatcher();
+            Message.Request request= state.getMetadataForConsistencyWithCallback().getRequest();
+
+            dispatcher.flush(new Message.Dispatcher.FlushItem(ctx, response, request.getSourceFrame()));
         });
 
         // immediately return the data in hand
