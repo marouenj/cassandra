@@ -1592,6 +1592,7 @@ public class StorageProxy implements StorageProxyMBean
             if (consistencyLevel != ConsistencyLevel.ALL_CALLBACK && consistencyLevel != ConsistencyLevel.QUORUM_CALLBACK)
                 result = fetchRows(group.commands, consistencyLevel);
             else {
+                state.getMetadataForConsistencyWithCallback().setGroup(group);
                 result = fetchRowsWithCallback(group.commands, consistencyLevel, state);
             }
             // If we have more than one command, then despite each read command honoring the limit, the total result
@@ -1703,6 +1704,11 @@ public class StorageProxy implements StorageProxyMBean
             }
 
             PartitionIterator result = PartitionIterators.concat(results);
+
+            //
+            SinglePartitionReadCommand.Group group = state.getMetadataForConsistencyWithCallback().getGroup();
+            if (group.commands.size() > 1)
+                result = group.limits().filter(result, group.nowInSec());
         });
 
         // immediately return the data in hand
