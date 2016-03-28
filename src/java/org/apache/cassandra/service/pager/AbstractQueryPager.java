@@ -26,7 +26,7 @@ import org.apache.cassandra.exceptions.RequestExecutionException;
 import org.apache.cassandra.exceptions.RequestValidationException;
 import org.apache.cassandra.service.QueryState;
 
-abstract class AbstractQueryPager implements QueryPager
+public abstract class AbstractQueryPager implements QueryPager
 {
     protected final ReadCommand command;
     protected final DataLimits limits;
@@ -77,7 +77,7 @@ abstract class AbstractQueryPager implements QueryPager
         return Transformation.apply(nextPageReadCommand(pageSize).executeInternal(orderGroup), pager);
     }
 
-    private class Pager extends Transformation<RowIterator>
+    public class Pager extends Transformation<RowIterator>
     {
         private final DataLimits pageLimits;
         private final DataLimits.Counter counter;
