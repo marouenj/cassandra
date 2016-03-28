@@ -64,6 +64,7 @@ public abstract class AbstractQueryPager implements QueryPager
 
         pageSize = Math.min(pageSize, remaining);
         Pager pager = new Pager(limits.forPaging(pageSize), command.nowInSec());
+        queryState.getMetadataForConsistencyWithCallback().setTransformationPager(pager);
         return Transformation.apply(nextPageReadCommand(pageSize).execute(consistency, queryState), pager);
     }
 

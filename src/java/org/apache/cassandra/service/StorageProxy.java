@@ -32,6 +32,8 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.apache.cassandra.db.transform.Transformation;
+import org.apache.cassandra.service.pager.AbstractQueryPager;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1709,6 +1711,12 @@ public class StorageProxy implements StorageProxyMBean
             SinglePartitionReadCommand.Group group = state.getMetadataForConsistencyWithCallback().getGroup();
             if (group.commands.size() > 1)
                 result = group.limits().filter(result, group.nowInSec());
+
+            //
+            AbstractQueryPager.Pager transformationPager = state.getMetadataForConsistencyWithCallback().getTransformationPager();
+            if (transformationPager != null) { // add test on nullity
+                result = Transformation.apply(result, transformationPager);
+            }
         });
 
         // immediately return the data in hand
