@@ -211,7 +211,7 @@ public class SelectStatement implements CQLStatement
             return execute(query, options, state, nowInSec, userLimit);
 
         QueryPager pager = query.getPager(options.getPagingState(), options.getProtocolVersion());
-        return execute(Pager.forDistributedQuery(pager, cl, state), options, pageSize, nowInSec, userLimit);
+        return execute(Pager.forDistributedQuery(pager, cl, state), state, options, pageSize, nowInSec, userLimit);
     }
 
     private int getPageSize(QueryOptions options)
@@ -318,6 +318,16 @@ public class SelectStatement implements CQLStatement
                 return pager.fetchPageInternal(pageSize, orderGroup);
             }
         }
+    }
+
+    private ResultMessage.Rows execute(Pager pager,
+                                       QueryState state,
+                                       QueryOptions options,
+                                       int pageSize,
+                                       int nowInSec,
+                                       int userLimit) throws RequestValidationException, RequestExecutionException
+    {
+        return execute(pager, options, pageSize, nowInSec, userLimit);
     }
 
     private ResultMessage.Rows execute(Pager pager,
