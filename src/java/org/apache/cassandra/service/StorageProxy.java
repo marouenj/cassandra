@@ -32,8 +32,11 @@ import com.google.common.base.Predicate;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.apache.cassandra.cql3.QueryOptions;
+import org.apache.cassandra.cql3.statements.SelectStatement;
 import org.apache.cassandra.db.transform.Transformation;
 import org.apache.cassandra.service.pager.AbstractQueryPager;
+import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1717,6 +1720,19 @@ public class StorageProxy implements StorageProxyMBean
             if (transformationPager != null) { // add test on nullity
                 result = Transformation.apply(result, transformationPager);
             }
+
+            //
+            SelectStatement selectStatement = state.getMetadataForConsistencyWithCallback().getSelectStatement();
+            QueryOptions queryOptions = state.getMetadataForConsistencyWithCallback().getQueryOptions();
+            int nowInSec = state.getMetadataForConsistencyWithCallback().getNowInSec();
+            int userLimit = state.getMetadataForConsistencyWithCallback().getUserLimit();
+
+            ResultMessage.Rows msg = selectStatement.processResults(result, queryOptions, nowInSec, userLimit);
+            result.close();
+
+            SelectStatement.Pager pager = state.getMetadataForConsistencyWithCallback().getPager();
+            if (pager != null && !pager.isExhausted()) // add condition on nullity
+                msg.result.metadata.setHasMorePages(pager.state());
         });
 
         // immediately return the data in hand

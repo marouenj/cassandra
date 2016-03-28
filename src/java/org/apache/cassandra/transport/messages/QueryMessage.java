@@ -112,6 +112,8 @@ public class QueryMessage extends Message.Request
                 Tracing.instance.begin("Execute CQL3 query", state.getClientAddress(), builder.build());
             }
 
+            state.getMetadataForConsistencyWithCallback().setQueryOptions(options);
+
             Message.Response response = ClientState.getCQLQueryHandler().process(query, state, options, getCustomPayload());
             if (options.skipMetadata() && response instanceof ResultMessage.Rows)
                 ((ResultMessage.Rows)response).result.metadata.setSkipMetadata();

@@ -327,6 +327,11 @@ public class SelectStatement implements CQLStatement
                                        int nowInSec,
                                        int userLimit) throws RequestValidationException, RequestExecutionException
     {
+        state.getMetadataForConsistencyWithCallback().setSelectStatement(this);
+        state.getMetadataForConsistencyWithCallback().setPager(pager);
+        state.getMetadataForConsistencyWithCallback().setNowInSec(nowInSec);
+        state.getMetadataForConsistencyWithCallback().setUserLimit(userLimit);
+
         return execute(pager, options, pageSize, nowInSec, userLimit);
     }
 
