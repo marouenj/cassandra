@@ -1701,6 +1701,8 @@ public class StorageProxy implements StorageProxyMBean
                 assert reads[i].isDone();
                 results.add(reads[i].getResult());
             }
+
+            PartitionIterator result = PartitionIterators.concat(results);
         });
 
         // immediately return the data in hand
