@@ -112,6 +112,7 @@ public class QueryState
 
         private Message.Dispatcher dispatcher;
         private ChannelHandlerContext ctx;
+        private Message.Request request;
         private int streamId;
         private ServerConnection connection;
         private Message.Type type;
@@ -138,6 +139,14 @@ public class QueryState
 
         public void setCtx(ChannelHandlerContext ctx) {
             this.ctx = ctx;
+        }
+
+        public Message.Request getRequest() {
+            return request;
+        }
+
+        public void setRequest(Message.Request request) {
+            this.request = request;
         }
 
         public int getStreamId() {

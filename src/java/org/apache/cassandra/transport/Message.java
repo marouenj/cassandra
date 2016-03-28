@@ -505,6 +505,7 @@ public abstract class Message
 
                 qstate.getMetadataForConsistencyWithCallback().setDispatcher(this);
                 qstate.getMetadataForConsistencyWithCallback().setCtx(ctx);
+                qstate.getMetadataForConsistencyWithCallback().setRequest(request);
                 qstate.getMetadataForConsistencyWithCallback().setStreamId(request.getStreamId());
                 qstate.getMetadataForConsistencyWithCallback().setConnection(connection);
                 qstate.getMetadataForConsistencyWithCallback().setType(request.type);
