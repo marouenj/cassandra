@@ -22,7 +22,13 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import io.netty.channel.ChannelHandlerContext;
+import org.apache.cassandra.cql3.QueryOptions;
+import org.apache.cassandra.cql3.statements.SelectStatement;
+import org.apache.cassandra.db.SinglePartitionReadCommand;
+import org.apache.cassandra.service.pager.AbstractQueryPager;
 import org.apache.cassandra.tracing.Tracing;
+import org.apache.cassandra.transport.Message;
+import org.apache.cassandra.transport.ServerConnection;
 
 /**
  * Represents the state related to a given query.
@@ -32,7 +38,7 @@ public class QueryState
     private final ClientState clientState;
     private volatile UUID preparedTracingSession;
 
-    private ChannelHandlerContext ctx;
+    private final PiggyBack metadata = new PiggyBack();
 
     public QueryState(ClientState clientState)
     {
@@ -98,11 +104,119 @@ public class QueryState
              : clientState.getRemoteAddress().getAddress();
     }
 
-    public ChannelHandlerContext getCtx() {
-        return this.ctx;
+    public PiggyBack getMetadataForConsistencyWithCallback() {
+        return metadata;
     }
 
-    public void setCtx(ChannelHandlerContext ctx) {
-        this.ctx = ctx;
+    public static class PiggyBack {
+
+        private ChannelHandlerContext ctx;
+        private int streamId;
+        private ServerConnection connection;
+        private Message.Type type;
+        private QueryOptions queryOptions;
+        private UUID tracingId;
+        private SelectStatement selectStatement;
+        private SelectStatement.Pager pager;
+        private int nowInSec;
+        private int userLimit;
+        private AbstractQueryPager.Pager transformationPager;
+        private SinglePartitionReadCommand.Group group;
+
+        public ChannelHandlerContext getCtx() {
+            return this.ctx;
+        }
+
+        public void setCtx(ChannelHandlerContext ctx) {
+            this.ctx = ctx;
+        }
+
+        public int getStreamId() {
+            return streamId;
+        }
+
+        public void setStreamId(int streamId) {
+            this.streamId = streamId;
+        }
+
+        public ServerConnection getConnection() {
+            return connection;
+        }
+
+        public void setConnection(ServerConnection connection) {
+            this.connection = connection;
+        }
+
+        public Message.Type getType() {
+            return type;
+        }
+
+        public void setType(Message.Type type) {
+            this.type = type;
+        }
+
+        public QueryOptions getQueryOptions() {
+            return queryOptions;
+        }
+
+        public void setQueryOptions(QueryOptions queryOptions) {
+            this.queryOptions = queryOptions;
+        }
+
+        public UUID getTracingId() {
+            return tracingId;
+        }
+
+        public void setTracingId(UUID tracingId) {
+            this.tracingId = tracingId;
+        }
+
+        public SelectStatement getSelectStatement() {
+            return selectStatement;
+        }
+
+        public void setSelectStatement(SelectStatement selectStatement) {
+            this.selectStatement = selectStatement;
+        }
+
+        public SelectStatement.Pager getPager() {
+            return pager;
+        }
+
+        public void setPager(SelectStatement.Pager pager) {
+            this.pager = pager;
+        }
+
+        public int getNowInSec() {
+            return nowInSec;
+        }
+
+        public void setNowInSec(int nowInSec) {
+            this.nowInSec = nowInSec;
+        }
+
+        public int getUserLimit() {
+            return userLimit;
+        }
+
+        public void setUserLimit(int userLimit) {
+            this.userLimit = userLimit;
+        }
+
+        public AbstractQueryPager.Pager getTransformationPager() {
+            return transformationPager;
+        }
+
+        public void setTransformationPager(AbstractQueryPager.Pager transformationPager) {
+            this.transformationPager = transformationPager;
+        }
+
+        public SinglePartitionReadCommand.Group getGroup() {
+            return group;
+        }
+
+        public void setGroup(SinglePartitionReadCommand.Group group) {
+            this.group = group;
+        }
     }
 }
